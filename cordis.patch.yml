@@ -1,0 +1,6 @@
+# dsh-prompt-craft — one row, no dependencies on other plugin rows.
+# `dsh-prompt-enhance` keeps its own row untouched: the two plugins coexist,
+# and removing this one leaves the other exactly as it was.
+- insert:
+    - id: prompt-craft
+      name: dsh-prompt-craft
