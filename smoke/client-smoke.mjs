@@ -23,6 +23,12 @@ const React = {
   useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
   useEffect: () => undefined,
   useMemo: (fn) => fn(),
+  useState: (initial) => [initial, () => undefined],
+}
+
+/** The panel is portaled to <body>; the stub just hands the element back. */
+const ReactDOM = {
+  createPortal: (element) => element,
 }
 
 /** Collect every element in a rendered tree, in order. */
@@ -65,6 +71,8 @@ const styleElements = []
 const listeners = []
 globalThis.document = {
   head: { appendChild: (element) => styleElements.push(element) },
+  body: { tag: 'body' },
+  documentElement: { tag: 'html' },
   createElement: (tag) => ({ tag, id: '', textContent: '' }),
   getElementById: (id) => styleElements.find((element) => element.id === id) ?? null,
   querySelector: (selector) => (selector === '.dsh-pc-btn' ? { disabled: false, click: () => undefined } : null),
@@ -85,8 +93,9 @@ globalThis.window = {
 /* ------------------------------------------------------------- load the half */
 
 const fakeRequire = (id) => {
-  assert.equal(id, 'react', `unexpected require('${id}')`)
-  return React
+  if (id === 'react') return React
+  if (id === 'react-dom') return ReactDOM
+  assert.fail(`unexpected require('${id}')`)
 }
 new Function('window', 'document', source)(globalThis.window, globalThis.document ?? {})
 assert.equal(loaded?.id, 'dsh-prompt-craft', 'module id must be the package name')
@@ -159,6 +168,9 @@ const result = dock(readyProps)
 const panelText = collectStrings(result).join('')
 assert.match(panelText, /任务简报/, 'result panel must render')
 assert.match(panelText, /BRIEF/, 'result panel must show the rewritten text')
+assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-overlay') !== null, true, 'result must be a fixed overlay')
+assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-panel') !== null, true, 'overlay must contain the resizable panel')
+assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-grip') !== null, true, 'panel must expose the drag grip')
 assert.equal(find(result, (element) => collectStrings(element).join('') === '采用并填入') !== null, true, 'adopt button must exist')
 
 const adopt = find(result, (element) => element.props?.onClick !== undefined && collectStrings(element).join('') === '采用并填入')

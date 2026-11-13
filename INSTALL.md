@@ -1,4 +1,4 @@
-# 装到另一台电脑
+﻿# 装到另一台电脑
 
 这个插件没有依赖、不需要 Node、不需要 pnpm、不需要构建：整包就是 5 个文件（`package.json`、`cordis.patch.yml`、`lib/index.js`、`lib/client.js`、`README.md`）。所以"搬家"只是把这几个文件放到目标机、再让 DSH 把它登记成 bundle 这一步。
 
@@ -8,9 +8,9 @@
 
 ## 方式一：拷 tgz（离线、最省事）
 
-1. 把 `dist/dsh-prompt-craft-0.1.0.tgz` 拷到目标机任意目录，例如 `D:\plugins\dsh-prompt-craft-0.1.0.tgz`。
-2. 在目标机的 DSH 会话里让 agent 装：**安装 bundle，目标就是那个 tgz 的绝对路径**（等价于 `plugin_manager install_bundle`，`target` 传 `D:\plugins\dsh-prompt-craft-0.1.0.tgz`）。
-   命令行等价写法：`dsh plugin --profile <profile名> add D:\plugins\dsh-prompt-craft-0.1.0.tgz`
+1. 把 `dist/dsh-prompt-craft-0.1.1.tgz` 拷到目标机任意目录，例如 `D:\plugins\dsh-prompt-craft-0.1.1.tgz`。
+2. 在目标机的 DSH 会话里让 agent 装：**安装 bundle，目标就是那个 tgz 的绝对路径**（等价于 `plugin_manager install_bundle`，`target` 传 `D:\plugins\dsh-prompt-craft-0.1.1.tgz`）。
+   命令行等价写法：`dsh plugin --profile <profile名> add D:\plugins\dsh-prompt-craft-0.1.1.tgz`
 3. 刷新目标机的 DSH 网页，输入框右侧出现「✦ 锻造」。
 
 本机已验证过这条路径：用 tgz 装上后接口返回 200，随后再换回目录安装，功能不变。
