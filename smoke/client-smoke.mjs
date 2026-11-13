@@ -214,6 +214,21 @@ upListener.listener()
 assert.equal(stateWrites.includes(true), true, 'a drag must flip the head to the grabbing cursor')
 assert.equal(stateWrites.includes(false), true, 'releasing must flip the cursor back')
 assert.equal(windowListeners.some((entry) => entry.type === 'pointermove'), false, 'pointerup must release the drag listeners')
+
+// 3c. The limits are measured from the panel's rested position, so a panel that is
+// already pushed up keeps its full travel. Regression: the bounds used the moved
+// rect, so every drag after the first had less room, and a drag from the top edge
+// stuck (or snapped back to the bottom) instead of coming down again.
+const view = { width: 1280, height: 800 }
+const boundsAtRest = module.__test.dragBounds(rect, { x: 0, y: 0 }, view)
+const boundsAtTop = module.__test.dragBounds(
+  { left: rect.left, right: rect.right, top: rect.top + boundsAtRest.minY, bottom: rect.bottom + boundsAtRest.minY },
+  { x: 0, y: boundsAtRest.minY },
+  view,
+)
+assert.deepEqual(boundsAtTop, boundsAtRest, 'drag limits must not shrink once the panel has been moved')
+assert.equal(boundsAtRest.minY, 8 - rect.top, 'the panel must be able to reach the top edge')
+assert.equal(boundsAtTop.maxY + boundsAtTop.minY, boundsAtRest.maxY + boundsAtRest.minY, 'the travel range must stay the same in both directions')
 assert.equal(find(result, (element) => collectStrings(element).join('') === '采用并填入') !== null, true, 'adopt button must exist')
 
 const adopt = find(result, (element) => element.props?.onClick !== undefined && collectStrings(element).join('') === '采用并填入')
