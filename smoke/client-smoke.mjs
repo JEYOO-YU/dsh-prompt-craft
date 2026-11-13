@@ -23,8 +23,11 @@ const React = {
   useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
   useEffect: () => undefined,
   useMemo: (fn) => fn(),
-  useState: (initial) => [initial, () => undefined],
+  useState: (initial) => [initial, (value) => stateWrites.push(value)],
 }
+
+/** Every value written through a useState setter, so drag effects are observable. */
+const stateWrites = []
 
 /** The panel is portaled to <body>; the stub just hands the element back. */
 const ReactDOM = {
@@ -82,7 +85,15 @@ globalThis.document = {
     if (index >= 0) listeners.splice(index, 1)
   },
 }
+const windowListeners = []
 globalThis.window = {
+  innerWidth: 1280,
+  innerHeight: 800,
+  addEventListener: (type, listener) => windowListeners.push({ type, listener }),
+  removeEventListener: (type, listener) => {
+    const index = windowListeners.findIndex((entry) => entry.type === type && entry.listener === listener)
+    if (index >= 0) windowListeners.splice(index, 1)
+  },
   __ModuleLoader__: {
     load: (definition) => {
       loaded = definition
@@ -169,8 +180,36 @@ const panelText = collectStrings(result).join('')
 assert.match(panelText, /任务简报/, 'result panel must render')
 assert.match(panelText, /BRIEF/, 'result panel must show the rewritten text')
 assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-overlay') !== null, true, 'result must be a fixed overlay')
-assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-panel') !== null, true, 'overlay must contain the resizable panel')
-assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-grip') !== null, true, 'panel must expose the drag grip')
+const panelElement = find(result, (element) => element.props?.className === 'dsh-pc-panel')
+assert.equal(panelElement !== null, true, 'overlay must contain the resizable panel')
+assert.match(String(panelElement?.props?.style?.transform), /^translate\(/, 'panel must be positioned by a transform so it can be dragged')
+assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-grip') !== null, true, 'panel must expose the resize grip')
+const headElement = find(result, (element) => element.props?.className === 'dsh-pc-head')
+assert.equal(typeof headElement?.props?.onPointerDown, 'function', 'title bar must start a drag')
+assert.equal(typeof headElement?.props?.onDoubleClick, 'function', 'title bar must reset its position on double click')
+
+// 3b. Dragging the title bar moves the panel, and the limits keep it reachable.
+const rect = { left: 200, right: 1080, top: 300, bottom: 700, width: 880, height: 400 }
+const offsetsWritten = () => stateWrites.filter((value) => typeof value === 'object' && value !== null && 'x' in value)
+stateWrites.length = 0
+headElement.props.onPointerDown({
+  clientX: 500,
+  clientY: 320,
+  button: 0,
+  target: { closest: () => null },
+  currentTarget: { parentElement: { getBoundingClientRect: () => rect } },
+  preventDefault: () => undefined,
+})
+const moveListener = windowListeners.find((entry) => entry.type === 'pointermove')
+assert.ok(moveListener !== undefined, 'a drag must attach a pointermove listener')
+moveListener.listener({ clientX: 99999, clientY: 99999 })
+assert.deepEqual(offsetsWritten().pop(), { x: 1280 - 8 - rect.right, y: 800 - 8 - rect.bottom }, 'drag must clamp the panel inside the viewport')
+moveListener.listener({ clientX: 500, clientY: 320 })
+assert.deepEqual(offsetsWritten().pop(), { x: 0, y: 0 }, 'dragging back to the origin must restore the default spot')
+const upListener = windowListeners.find((entry) => entry.type === 'pointerup')
+assert.ok(upListener !== undefined, 'a drag must attach a pointerup listener')
+upListener.listener()
+assert.equal(windowListeners.some((entry) => entry.type === 'pointermove'), false, 'pointerup must release the drag listeners')
 assert.equal(find(result, (element) => collectStrings(element).join('') === '采用并填入') !== null, true, 'adopt button must exist')
 
 const adopt = find(result, (element) => element.props?.onClick !== undefined && collectStrings(element).join('') === '采用并填入')
