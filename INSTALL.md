@@ -1,4 +1,4 @@
-﻿# 装到另一台电脑
+# 装到另一台电脑
 
 这个插件没有依赖、不需要 Node、不需要 pnpm、不需要构建：整包就是 5 个文件（`package.json`、`cordis.patch.yml`、`lib/index.js`、`lib/client.js`、`README.md`）。所以"搬家"只是把这几个文件放到目标机、再让 DSH 把它登记成 bundle 这一步。
 

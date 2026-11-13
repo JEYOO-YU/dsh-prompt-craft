@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "dsh-prompt-craft",
   "version": "0.1.1",
   "description": "A second composer button for DeepSeek Harness: rewrite a rough draft into a task brief for a tool-using agent (outcome, boundaries, checkable done, explicit assumptions). Coexists with dsh-prompt-enhance; uninstall it and nothing else changes.",
