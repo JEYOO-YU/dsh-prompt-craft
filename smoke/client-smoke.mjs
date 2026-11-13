@@ -187,6 +187,8 @@ assert.equal(find(result, (element) => element.props?.className === 'dsh-pc-grip
 const headElement = find(result, (element) => element.props?.className === 'dsh-pc-head')
 assert.equal(typeof headElement?.props?.onPointerDown, 'function', 'title bar must start a drag')
 assert.equal(typeof headElement?.props?.onDoubleClick, 'function', 'title bar must reset its position on double click')
+assert.equal(headElement?.props?.style?.cursor, 'move', 'title bar must advertise the move cursor before the drag starts')
+assert.equal(find(headElement, (element) => element.props?.className === 'dsh-pc-dots') !== null, true, 'title bar must show a drag handle affordance')
 
 // 3b. Dragging the title bar moves the panel, and the limits keep it reachable.
 const rect = { left: 200, right: 1080, top: 300, bottom: 700, width: 880, height: 400 }
@@ -209,6 +211,8 @@ assert.deepEqual(offsetsWritten().pop(), { x: 0, y: 0 }, 'dragging back to the o
 const upListener = windowListeners.find((entry) => entry.type === 'pointerup')
 assert.ok(upListener !== undefined, 'a drag must attach a pointerup listener')
 upListener.listener()
+assert.equal(stateWrites.includes(true), true, 'a drag must flip the head to the grabbing cursor')
+assert.equal(stateWrites.includes(false), true, 'releasing must flip the cursor back')
 assert.equal(windowListeners.some((entry) => entry.type === 'pointermove'), false, 'pointerup must release the drag listeners')
 assert.equal(find(result, (element) => collectStrings(element).join('') === '采用并填入') !== null, true, 'adopt button must exist')
 
