@@ -47,6 +47,21 @@ try {
   }
 
   # 有未提交改动就先提交，否则 push 出去的还是旧内容。
+  # 提交前先清理 manifest：插件加载器用 JSON.parse 读 package.json，文件开头的
+  # UTF-8 BOM 会被当成非法字符（面板会显示「包不可用 / Unexpected token」）。
+  $manifest = Join-Path $root 'package.json'
+  if (Test-Path $manifest) {
+    $bytes = [System.IO.File]::ReadAllBytes($manifest)
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+      Write-Host 'package.json 带 BOM，自动去掉 ...'
+      $text = [System.IO.File]::ReadAllText($manifest)
+      if ($text.Length -gt 0 -and [int]$text[0] -eq 0xFEFF) { $text = $text.Substring(1) }
+      [System.IO.File]::WriteAllText($manifest, $text, (New-Object System.Text.UTF8Encoding($false)))
+    }
+    try { Get-Content $manifest -Raw | ConvertFrom-Json | Out-Null }
+    catch { throw 'package.json 不是合法 JSON，先修好再推送。' }
+  }
+
   $dirty = & $git status --porcelain
   if ($dirty) {
     $msg = if ($Message) { $Message } else { 'update dsh-prompt-craft' }
